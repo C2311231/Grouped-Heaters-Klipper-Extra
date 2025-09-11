@@ -72,7 +72,7 @@ class SharedHeaterGroup:
         with self.lock:
             if read_time - self.last_switch_time > self.cycle_time:
                 random.shuffle(self.heaters)
-                heaters_sorted = sorted(self.heaters, key=lambda x: (x.target_temp - x.last_temp))
+                heaters_sorted = sorted(self.heaters, key=lambda x: (x.target_temp - x.last_temp), reverse=True)
                 self.active_heaters = []
                 for i in range(self.max_active):
                     self.active_heaters.append(heaters_sorted[i])
