@@ -26,7 +26,6 @@ class SharedHeaterGroup:
         self.heaters = []
         self.cycle_time = cycle_time
         self.max_active = max_active
-        self.last_idx = 0
         self.last_switch_time = 0.0
         self.lock = threading.Lock()
         self.active_heaters = []
