@@ -2,6 +2,12 @@
 
 A Klipper firmware extra to manage **multiple heaters in a shared group**, limiting simultaneous heating and enabling coordinated control to keep large multisegment heat beds within power constraints. Additionally can be used with any generic heaters.
 
+---
+
+This has not been tested on a real machine, however preformed as expected in the [Virtual-Klipper-Printer](https://github.com/mainsail-crew/virtual-klipper-printer) simulator by the Mainsail-Crew.
+
+---
+
 ## Features
 
 - **Grouped heater management**: Combine multiple heaters into a single logical group.  
