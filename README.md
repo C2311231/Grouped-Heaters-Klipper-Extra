@@ -20,33 +20,17 @@ This has not been tested on a real machine, however preformed as expected in the
 ## Installation
 
 1. Download the python files from this repository into your ~/klipper/klippy/extras folder:  
-2. Update your printer configuration (`printer.cfg`) to load the extra (MUST come before and other sections from this extra can be used):
+2. Update your printer configuration (`printer.cfg`) to load the extra (MUST come after the heaters are defined in the config):
 
    ```ini
-   [shared_heater_groups]
-   # No configuration section needed for the manager itself
-   ```
-
-3. Configure each shared heater identically to a generic heater with the addition of a share_group:  
-
-   ```ini
-   [grouped_heater my_heater_1]
-   share_group: bed_group
-
-   [grouped_heater my_heater_2]
-   share_group: bed_group
-   ```
-
-4. (Optionally) Create a shared_heater_group to configure group settings.
-
-   ```ini
-   [shared_heater_group bed_group]
-   cycle_time: 1 #(optional) Seconds between heater switches in a group. Default: `1.0`.  
+   [shared_heater_group {group_name}]
+   cycle_time: 1 #(optional) The total time in seconds between heater scheduling (lower times increase heater responsiveness but reduses maximum power output). Default: `1.0` could cause problems if greater than 5.  
    max_active: 1 #(optional) Maximum number of heaters allowed to heat simultaneously. Default: `1`.
    is_bed: False #(optional) If true, registers M140/M190 commands for the group. (Can not have a seprate heatbed in configuration) 
+   heaters: # (Required) A list of the names of all heaters (heater_generic recommended) in the group seperated by commas
    ```
 
-5. Restart Klipper:
+3. Restart Klipper:
 
    ```bash
    sudo service klipper restart
@@ -55,32 +39,29 @@ This has not been tested on a real machine, however preformed as expected in the
 Example:  
 
 ```ini
-[shared_heater_groups]
-
-[grouped_heater bed_left]
-share_group: bed_group
+[heater_generic Heater1]
 #...
 
-[grouped_heater bed_right]
-share_group: bed_group
+[heater_generic Heater2]
 #...
 
 [shared_heater_group bed_group]
 cycle_time: 1
 max_active: 1
-is_bed: True 
+is_bed: True
+heaters: Heater1, Heater2
 ```
 
 ## Known Limitations
 
-- Extra will prioritize heaters furthest from target temperature. So if a new heater is activated while others are at temperature they may be disabled until the new heater approaches its target.
-- Mainsail may not display target temperature or allow setting it easily; gcode commands function normally.
-- No support for extruders. (Was deemed unnecessary)
+- Does not always distribute power proportionally between heaters.
+- Has a 20ms downtime between heater switches to prevent issues with ssr switching speed, so the maximum output power per cycle is redused
 
-## Development Notes
+## Upcomming changes
 
-- Only `set_pwm()` is overridden in the `Grouped_Heater` class; all other Heater functionality is inherited.
-- Supports multiple heater types and combinations of control schemes.
+- Add status reporting to shared groups
+- Clean up the scheduler and better test it for errors
+- Clean up comments
 
 ## License
 
