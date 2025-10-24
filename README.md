@@ -19,7 +19,12 @@ This has not been tested on a real machine, however preformed as expected in the
 
 ## Installation
 
-1. Download the python files from this repository into your ~/klipper/klippy/extras folder:  
+1. Clone this repository into your klipper extras:
+
+   ```ini
+   git clone https://github.com/C2311231/Grouped-Heaters-Klipper-Extra.git ~/klipper/klippy/extras/shared_heater_group/
+   ```
+
 2. Update your printer configuration (`printer.cfg`) to load the extra (MUST come after the heaters are defined in the config):
 
    ```ini
@@ -30,7 +35,18 @@ This has not been tested on a real machine, however preformed as expected in the
    heaters: # (Required) A list of the names of all heaters (heater_generic recommended) in the group seperated by commas
    ```
 
-3. Restart Klipper:
+3. Update your moonraker configuration to allow for updating:
+
+   ```ini
+   [update_manager Shared_Heater_Groups]
+   type: git_repo
+   path: ~/klipper/klippy/extras/shared_heater_group
+   origin: https://github.com/C2311231/Grouped-Heaters-Klipper-Extra.git
+   primary_branch: main
+   is_system_service: false
+   ```
+
+4. Restart Klipper:
 
    ```bash
    sudo service klipper restart
