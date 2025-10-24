@@ -1,6 +1,5 @@
-import random
 import threading
-from . import heaters
+from extras import heaters
 import math
 import logging
 import types
