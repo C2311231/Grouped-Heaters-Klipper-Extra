@@ -4,7 +4,7 @@ import logging
 import types
 
 ######################################################################
-# Heater Class Overides
+# Heater Class Overrides
 ######################################################################
 def set_pwm(self, read_time, value):
     heater_active = False
@@ -21,7 +21,7 @@ def set_pwm(self, read_time, value):
             time_to_heater_off = end_time - (read_time + self.pwm_delay)
             pwm_scale = time_to_next_cycle / time_to_heater_off
             
-            self.mcu_pwm.set_pwm(read_time + self.pwm_delay, min(value*pwm_scale, 1.0)) ## Pwm_delay is added to keep consistancy with the original set_pwm function unknown if it is beneficial here
+            self.mcu_pwm.set_pwm(read_time + self.pwm_delay, min(value*pwm_scale, 1.0)) ## Pwm_delay is added to keep consistency with the original set_pwm function unknown if it is beneficial here
             self.last_pwm_value = value
             break
     
@@ -101,7 +101,7 @@ class SharedHeaterGroup:
         for heater in self.heaters:
             total_heater_target_usage += heater.target_pwm
         
-        # This is the size that each conseptural box should be assuming all heaters are smaller than the box
+        # This is the size that each conceptual box should be assuming all heaters are smaller than the box
         total_box_size = total_heater_target_usage / self.max_active
         
         unpacked_heaters = list(self.heaters)
