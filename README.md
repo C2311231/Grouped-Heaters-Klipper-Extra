@@ -1,6 +1,6 @@
 # Grouped Heaters: Klipper Extra
 
-A Klipper firmware extra to manage **multiple heaters in a shared group**, limiting simultaneous heating and enabling coordinated control to keep large multisegment heat beds within power constraints. Additionally can be used with any generic heaters.
+A Klipper firmware extra to manage **multiple heaters in a shared group**, limiting simultaneous heating and enabling coordinated control to keep large multi-segment heat beds within power constraints. Additionally can be used with any generic heaters.
 
 ---
 
@@ -15,7 +15,7 @@ This has not been tested on a real machine, however preformed as expected in the
 - **Cycle time control**: Switch heaters periodically to balance heating and prevent overshoot.  
 - **Bed support**: Automatically register M140/M190 commands for grouped beds.
 - **Individual Segment Temperature Control**: Allows each of the grouped heaters to have an independent target temperature while staying within power constraints.
-- **PID Control Compatable**: Maintains support for both PID and BangBang heater control schemes.
+- **PID Control Compatible**: Maintains support for both PID and BangBang heater control schemes.
 
 ## Installation
 
@@ -29,10 +29,10 @@ This has not been tested on a real machine, however preformed as expected in the
 
    ```ini
    [shared_heater_group {group_name}]
-   cycle_time: 1 #(optional) The total time in seconds between heater scheduling (lower times increase heater responsiveness but reduses maximum power output). Default: `1.0` could cause problems if greater than 5.  
+   cycle_time: 1 #(optional) The total time in seconds between heater scheduling (lower times increase heater responsiveness but reduces maximum power output). Default: `1.0` could cause problems if greater than 5.  
    max_active: 1 #(optional) Maximum number of heaters allowed to heat simultaneously. Default: `1`.
-   is_bed: False #(optional) If true, registers M140/M190 commands for the group. (Can not have a seprate heatbed in configuration) 
-   heaters: # (Required) A list of the names of all heaters (heater_generic recommended) in the group seperated by commas
+   is_bed: False #(optional) If true, registers M140/M190 commands for the group. (Can not have a separate heatbed in configuration) 
+   heaters: # (Required) A list of the names of all heaters (heater_generic recommended) in the group separated by commas
    ```
 
 3. Update your moonraker configuration to allow for updating:
@@ -68,12 +68,57 @@ is_bed: True
 heaters: Heater1, Heater2
 ```
 
+## PID Tuning
+
+1. Disable Extra (Optional)
+
+   WARNING  
+      This step will disable the max active heater enforcement!! You will need to manually ensure that you limit the number of heaters you have enabled at any time to be below the capabilities of your system.
+
+   For best results it is recommended to disable this extra while tunning the heaters, however it is not necessarily required. This can be done by commenting out the shared_heater_group sections in your config and then restarting klipper.
+
+   ```ini
+   #[shared_heater_group bed_group]
+   #cycle_time: 1
+   #max_active: 1
+   #is_bed: True
+   #heaters: Heater1, Heater2
+   ```
+
+2. Tune Each of the Heaters
+
+   For each of the heaters run the PID_CALIBRATE command at your expected operating temperature one at a time. It is recommended that all other heaters remain off while each heater calibrates to ensure you remain below your power budget.
+
+   ```ini
+   PID_CALIBRATE HEATER=<your_heater_config_name> TARGET=<expected_temperature>
+   ```
+
+3. Save PID values
+
+   Save the new PID values to your config.
+
+   ```ini
+   SAVE_CONFIG
+   ```
+
+4. Re-enable Extra
+
+   Uncomment the config section from Step 1 (If commented previously). Then save and restart klipper. This will reactivate the extra and the heaters can again be used as normal.
+
+   ```ini
+   [shared_heater_group bed_group]
+   cycle_time: 1
+   max_active: 1
+   is_bed: True
+   heaters: Heater1, Heater2
+   ```
+
 ## Known Limitations
 
 - Does not always distribute power proportionally between heaters.
-- Has a 20ms downtime between heater switches to prevent issues with ssr switching speed, so the maximum output power per cycle is redused
+- Has a 20ms downtime between heater switches to prevent issues with ssr switching speed, so the maximum output power per cycle is reduced
 
-## Upcomming changes
+## Upcoming changes
 
 - Add status reporting to shared groups
 - Clean up the scheduler and better test it for errors
