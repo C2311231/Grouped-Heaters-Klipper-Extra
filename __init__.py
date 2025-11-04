@@ -1,4 +1,3 @@
-import threading
 from extras import heaters
 import math
 import logging
@@ -56,7 +55,6 @@ class SharedHeaterGroup:
         self.max_active = max_active
         self.last_idx = 0
         self.last_switch_time = 0.0
-        self.lock = threading.Lock()
         self.active_heaters = []
         
         self.reactor.register_timer(self._schedule_heaters, waketime=self.reactor.monotonic()+0.5)
@@ -146,7 +144,6 @@ class SharedHeaterGroup:
             box_usage = 0
             for heater in box:
                 box_usage += heater.target_pwm
-                duration_scale = 0
             if box_usage <= 0:
                 scale_pwm = 0
             else:
@@ -185,7 +182,7 @@ class SharedHeaterGroup:
 
 def load_config_prefix(config):
     name = config.get_name()
-    short_name = short_name = name.split()[-1]
+    short_name = name.split()[-1]
     
     cycle_time = config.getfloat('cycle_time', 1.0)
     max_active = config.getint('max_active', 1)
