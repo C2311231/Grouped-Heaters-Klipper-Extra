@@ -4,7 +4,7 @@ A Klipper firmware extra to manage **multiple heaters in a shared group**, limit
 
 ---
 
-This has not been tested on a real machine, however preformed as expected in the [Virtual-Klipper-Printer](https://github.com/mainsail-crew/virtual-klipper-printer) simulator by the Mainsail-Crew.
+This has not been tested on a real machine, however preformed as expected in the [Virtual-Klipper-Printer](https://github.com/mainsail-crew/virtual-klipper-printer) simulator by the Mainsail-Crew. It is expected to be tested on a actual machine with a four segment heatbed in the coming weeks.
 
 ---
 
