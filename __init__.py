@@ -57,16 +57,13 @@ class SharedHeaterGroup:
         self.last_idx = 0
         self.last_switch_time = 0.0
         self.active_heaters = []
-        
-        self.reactor.register_timer(self._schedule_heaters, waketime=self.reactor.monotonic()+0.5)
-        
+                
         if is_bed:
             self.set_as_bed()
 
     def register(self, heater):
+        self.printer.register_event_handler("klippy:ready", self._late_init)
         self.heaters.append(heater)
-        heater.set_pwm = types.MethodType(set_pwm, heater)
-        heater.schedule_pwm = types.MethodType(schedule_pwm, heater)
         heater.printer = self.printer
         heater.group = self.name
         heater.schedule = []
@@ -74,6 +71,19 @@ class SharedHeaterGroup:
         heater.cycle_end_time = 0
         heater.cycle_time = self.cycle_time
         
+    def _late_init(self):
+        # patch heaters AFTER MCU is ready
+        for heater in self.heaters:
+            heater.set_pwm = types.MethodType(set_pwm, heater)
+            heater.schedule_pwm = types.MethodType(schedule_pwm, heater)
+
+        # start timer only now
+        self.reactor.register_timer(
+            self._schedule_heaters,
+            waketime=self.reactor.monotonic() + self.cycle_time
+        )
+
+    
     def set_as_bed(self):
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("M140", self.cmd_M140)
