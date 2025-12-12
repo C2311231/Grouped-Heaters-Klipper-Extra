@@ -36,11 +36,12 @@ def set_pwm(self, read_time, value):
         self.mcu_pwm.set_pwm(pwm_time + self.pwm_delay, 0)
 
 def schedule_pwm(self, start_time, value, end_time=None):
-    self.mcu_pwm.set_pwm(start_time, value)
-    self.last_pwm_value = value
-    if end_time is not None:
-        self.schedule.append((start_time, end_time, value))
-        self.mcu_pwm.set_pwm(end_time, 0)
+    if self.mcu_pwm != None:
+        self.mcu_pwm.set_pwm(start_time, value)
+        self.last_pwm_value = value
+        if end_time is not None:
+            self.schedule.append((start_time, end_time, value))
+            self.mcu_pwm.set_pwm(end_time, 0)
 
 ######################################################################
 # Heater Groups
