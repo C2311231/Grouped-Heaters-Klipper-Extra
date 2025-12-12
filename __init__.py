@@ -140,17 +140,24 @@ class SharedHeaterGroup:
                 unpacked_heaters.remove(heater)
                 continue
             
+            # If no remaining boxes exist, skip assigning heater
+            if not remaining_boxes:
+                logging.warning(
+                    f"No available boxes (max_active={self.max_active}) for heater {heater.name}; skipping"
+                )
+                continue
+
             lowest_usage_box_index = 0
             lowest_box_usage = math.inf
             for i in range(len(remaining_boxes)):
-                box_usage = 0
-                for remaining_heater in remaining_boxes[i]:
-                    box_usage += remaining_heater.target_pwm
+                box_usage = sum(h.target_pwm for h in remaining_boxes[i])
                 if box_usage < lowest_box_usage:
                     lowest_box_usage = box_usage
                     lowest_usage_box_index = i
-            remaining_boxes[lowest_usage_box_index].append(heater)   # May eventually want to change this to try and balance boxes better
+
+            remaining_boxes[lowest_usage_box_index].append(heater)
             unpacked_heaters.remove(heater)
+
             
         duration_scale = 0
         boxes = remaining_boxes + full_boxes
