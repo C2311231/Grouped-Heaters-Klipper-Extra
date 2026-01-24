@@ -1,10 +1,11 @@
 # Grouped Heaters: Klipper Extra
 
-A Klipper firmware extra to manage **multiple heaters in a shared group**, limiting simultaneous heating and enabling coordinated control to keep large multi-segment heat beds within power constraints. Additionally can be used with any generic heaters.
+A experimental Klipper firmware extra to manage **multiple heaters in a shared group**, limiting simultaneous heating and enabling coordinated control to keep large multi-segment heat beds within power constraints. Additionally can be used with any generic heaters.
 
 ---
 
-This has not been tested on a real machine, however preformed as expected in the [Virtual-Klipper-Printer](https://github.com/mainsail-crew/virtual-klipper-printer) simulator by the Mainsail-Crew. It is expected to be tested on a actual machine with a four segment heatbed in the coming weeks.
+This has now been tested on a real machine for a short duration.
+It is expected to be more extensively tested on a actual machine with a four segment heatbed in the coming weeks.
 
 ---
 
@@ -116,7 +117,10 @@ heaters: Heater1, Heater2
 ## Known Limitations
 
 - Does not always distribute power proportionally between heaters.
-- Has a 20ms downtime between heater switches to prevent issues with ssr switching speed, so the maximum output power per cycle is reduced
+- Has a 20ms downtime between heater switches to prevent issues with ssr switching speed, so the maximum output power per cycle is reduced.
+- It is not recommended to use with mechanical relays due to the high amount of switching involved
+- Switches active heaters on and off at least once per cycle even if not required
+- Reduces temperature control accuracy
 
 ## Upcoming changes
 
