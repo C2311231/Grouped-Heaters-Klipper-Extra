@@ -12,34 +12,32 @@ def set_pwm(self, read_time, value):
     
     # Check if schedule exists and if it is durring the scheduled time
     sched = getattr(self, "schedule", None)
-    if sched and "start_time" in sched and "end_time" in sched and "value" in sched:
+    if sched and self.target_value != 0 and "start_time" in sched and "end_time" in sched and "value" in sched:
         if sched["start_time"] <= self.printer.get_reactor().monotonic() + self.pwm_delay <= sched["end_time"]:
             value = sched["value"]
+            
+            # Ensures that all other heaters in the box are off
+            if self.last_pwm_value == 0:
+                for heater in self.box["heaters"]:
+                    if heater != self:
+                        heater.apply_pwm(read_time, 0)
+                        
+                    read_time += self.switching_delay # Ensures that the relay or ssr turns fully off before starting the next heater
     
-    logging.info(f"Read Time: {read_time}, Target Heater PWM Value: {value} Heater Request: {sched}")
+    logging.debug(f"Read Time: {read_time}, Target Heater PWM Value: {value} Heater Request: {sched}")
     
-    # The remainder of this method is the original set_pwm method from the klipper project
-    if self.target_temp <= 0. or read_time > self.verify_mainthread_time:
-            value = 0.
-    if ((read_time < self.next_pwm_time or not self.last_pwm_value)
-            and abs(value - self.last_pwm_value) < 0.05):
-            # No significant change in value - can suppress update
-            return
-    pwm_time = read_time + self.pwm_delay
-    self.next_pwm_time = (pwm_time + heaters.MAX_HEAT_TIME
-                              - (3. * self.pwm_delay + 0.001))
-    self.last_pwm_value = value
-    self.mcu_pwm.set_pwm(pwm_time, value)
+    self.apply_pwm(read_time, value)
 
 def schedule_pwm(self, time, start_time, value, end_time):    
-    logging.info(f"Time: {time} Heater {self.name} scheduling {start_time} to {end_time} with a pwm of: {value}")
+    logging.debug(f"Time: {time} Heater {self.name} scheduling {start_time} to {end_time} with a pwm of: {value}")
     self.schedule = {"start_time": start_time, "end_time": end_time, "value": value}
 
 ######################################################################
 # Heater Groups
 ######################################################################
 class SharedHeaterGroup:
-    def __init__(self, name, printer, cycle_time=1.0, max_active=1, is_bed=False):
+    def __init__(self, name, printer, cycle_time=1.0, max_active=1, is_bed=False, switching_delay=0.02):
+        self.switching_delay = switching_delay
         self.name = name
         self.printer = printer
         self.reactor = printer.get_reactor()
@@ -56,17 +54,17 @@ class SharedHeaterGroup:
 
     def register(self, heater):
         self.heaters.append(heater)
-        heater.printer = self.printer
-        heater.group = self.name
         heater.target_pwm = 0
-        heater.cycle_end_time = 0
-        heater.cycle_time = self.cycle_time
+        heater.switching_delay = self.switching_delay
+        heater.box = {"id": -1,"heaters": [],"usage": 99999}
         
     def _late_init(self):
         # patch heaters AFTER MCU is ready
         for heater in self.heaters:
+            heater.apply_pwm = heater.set_pwm
             heater.set_pwm = types.MethodType(set_pwm, heater)
             heater.schedule_pwm = types.MethodType(schedule_pwm, heater)
+            
 
         # start timer only now
         self.reactor.register_timer(
@@ -100,7 +98,7 @@ class SharedHeaterGroup:
 
     def _schedule_heaters(self, eventtime):
         time = self.reactor.monotonic()   
-        logging.info("Scheduling Heaters")
+        logging.debug("Scheduling Heaters")
         boxes = []
         for i in range(self.max_active):
             boxes.append({
@@ -108,7 +106,6 @@ class SharedHeaterGroup:
                 "heaters": [],
                 "usage": 0
                 })
-        
         
         for heater in self.heaters:
             heater_usage = heater.target_pwm
@@ -137,7 +134,8 @@ class SharedHeaterGroup:
             
             for heater in box["heaters"]:
                 # Calculate new pwm values and times
-                new_time = heater.target_pwm * scale_factor - 0.02
+                new_time = heater.target_pwm * scale_factor - self.switching_delay
+                new_time = max(new_time, 0.001)
                 new_pwm = min(heater.target_pwm * (self.cycle_time/new_time), 1)
                 
                 # Calculate the equivilent power output
@@ -145,9 +143,9 @@ class SharedHeaterGroup:
                 #heater.last_pwm_value = equivalent_pwm
                 
                 # Schedule Heater
-                heater.cycle_end_time = time + self.cycle_time
-                heater.schedule_pwm(time, current_time + 0.02, new_pwm, current_time + 0.02 + new_time)
-                current_time += 0.02 + new_time
+                heater.box = box
+                heater.schedule_pwm(time, current_time, new_pwm, current_time + self.switching_delay + new_time)
+                current_time += self.switching_delay + new_time
 
         return time + self.cycle_time
 
@@ -160,8 +158,9 @@ def load_config_prefix(config):
     max_active = config.getint('max_active', 1)
     is_bed = config.getboolean("is_bed", False)
     heaters = config.getlist("heaters")
+    switching_delay = config.getfloat('switch_delay', 0.02)
     pheaters = config.get_printer().load_object(config, 'heaters')
-    heater_group = SharedHeaterGroup(short_name, config.get_printer(), cycle_time, max_active, is_bed)
+    heater_group = SharedHeaterGroup(short_name, config.get_printer(), cycle_time, max_active, is_bed, switching_delay)
     for heater in heaters:
         heater_group.register(pheaters.lookup_heater(heater))
     

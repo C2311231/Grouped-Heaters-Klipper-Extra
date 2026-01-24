@@ -11,7 +11,6 @@ It is expected to be more extensively tested on a actual machine with a four seg
 
 ## Features
 
-- **Grouped heater management**: Combine multiple heaters into a single logical group.  
 - **Max active control**: Limit the number of heaters active at once (`max_active`) to prevent power surges.  
 - **Cycle time control**: Switch heaters periodically to balance heating and prevent overshoot.  
 - **Bed support**: Automatically register M140/M190 commands for grouped beds.
@@ -30,10 +29,11 @@ It is expected to be more extensively tested on a actual machine with a four seg
 
    ```ini
    [shared_heater_group {group_name}]
-   cycle_time: 1 #(optional) The total time in seconds between heater scheduling (lower times increase heater responsiveness but reduces maximum power output). Default: `1.0` could cause problems if greater than 5.  
+   cycle_time: 1 #(optional) The total time in seconds between heater scheduling (lower times increase heater responsiveness but reduces maximum power output). Default: `1.0`
    max_active: 1 #(optional) Maximum number of heaters allowed to heat simultaneously. Default: `1`.
    is_bed: False #(optional) If true, registers M140/M190 commands for the group. (Can not have a separate heatbed in configuration) 
    heaters: # (Required) A list of the names of all heaters (heater_generic recommended) in the group separated by commas
+   switch_delay: 0.02 #(optional) The total time in seconds between switching heaters. Default: `0.02` May cause multiple heates to be on durring relay swiching if too low  
    ```
 
 3. Update your moonraker configuration to allow for updating:
@@ -117,16 +117,10 @@ heaters: Heater1, Heater2
 ## Known Limitations
 
 - Does not always distribute power proportionally between heaters.
-- Has a 20ms downtime between heater switches to prevent issues with ssr switching speed, so the maximum output power per cycle is reduced.
+- Has a 20ms downtime between heater switches by default to prevent issues with ssr or relay switching speed, so the maximum output power per cycle is reduced.
 - It is not recommended to use with mechanical relays due to the high amount of switching involved
 - Switches active heaters on and off at least once per cycle even if not required
 - Reduces temperature control accuracy
-
-## Upcoming changes
-
-- Add status reporting to shared groups
-- Clean up the scheduler and better test it for errors
-- Clean up comments
 
 ## License
 
