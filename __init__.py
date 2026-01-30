@@ -12,7 +12,7 @@ def set_pwm(self, read_time, value):
     
     # Check if schedule exists and if it is durring the scheduled time
     sched = getattr(self, "schedule", None)
-    if sched and self.target_value != 0 and "start_time" in sched and "end_time" in sched and "value" in sched:
+    if sched and self.target_pwm != 0 and "start_time" in sched and "end_time" in sched and "value" in sched:
         if sched["start_time"] <= self.printer.get_reactor().monotonic() + self.pwm_delay <= sched["end_time"]:
             value = sched["value"]
             
