@@ -7,30 +7,31 @@ import types
 # Heater Class Overrides
 ######################################################################
 def set_pwm(self, read_time, value):
-    self.target_pwm = value
-    value = 0
-    
-    # Check if schedule exists and if it is durring the scheduled time
-    sched = getattr(self, "schedule", None)
-    if sched and self.target_pwm != 0 and "start_time" in sched and "end_time" in sched and "value" in sched:
-        if sched["start_time"] <= self.printer.get_reactor().monotonic() + self.pwm_delay <= sched["end_time"]:
-            value = sched["value"]
-            
-            # Ensures that all other heaters in the box are off
-            if self.last_pwm_value == 0:
-                for heater in self.box["heaters"]:
-                    if heater != self:
-                        heater.apply_pwm(read_time, 0)
-                        
-                    read_time += self.switching_delay # Ensures that the relay or ssr turns fully off before starting the next heater
-    
-    logging.debug(f"Read Time: {read_time}, Target Heater PWM Value: {value} Heater Request: {sched}")
-    
-    self.apply_pwm(read_time, value)
+    self.target_pwm = value # Saves for use by scheduler
 
-def schedule_pwm(self, time, start_time, value, end_time):    
+    logging.debug(f"Read Time: {read_time}, Target Heater PWM Value: {value}")
+    
+    if value != 0:
+        self.apply_pwm(read_time, self.last_pwm_value) # Sustains current target
+    else:
+        self.apply_pwm(read_time, 0) # Immediately turns off for safety
+
+def schedule_pwm(self, time, start_time, value, end_time):
     logging.debug(f"Time: {time} Heater {self.name} scheduling {start_time} to {end_time} with a pwm of: {value}")
-    self.schedule = {"start_time": start_time, "end_time": end_time, "value": value}
+    
+    start_print_time = self.mcu_pwm.get_mcu().clock_to_print_time(start_time)
+    end_print_time = self.mcu_pwm.get_mcu().clock_to_print_time(end_time)
+    
+    # Ensures the heater turns on and off at the proper times
+    self.reactor.register_timer(
+        lambda t: self.apply_pwm(start_print_time, value),
+        waketime=start_time
+    )
+    
+    self.reactor.register_timer(
+        lambda t: self.apply_pwm(end_print_time, 0),
+        waketime=end_time
+    )
 
 ######################################################################
 # Heater Groups
@@ -55,6 +56,7 @@ class SharedHeaterGroup:
     def register(self, heater):
         self.heaters.append(heater)
         heater.target_pwm = 0
+        heater.reactor = self.printer.get_reactor()
         heater.switching_delay = self.switching_delay
         heater.box = {"id": -1,"heaters": [],"usage": 99999}
         
@@ -144,10 +146,11 @@ class SharedHeaterGroup:
                 
                 # Schedule Heater
                 heater.box = box
-                heater.schedule_pwm(time, current_time, new_pwm, current_time + self.switching_delay + new_time)
-                current_time += self.switching_delay + new_time
+                heater.schedule_pwm(time, current_time + self.switching_delay, new_pwm, current_time + new_time)
 
-        return time + self.cycle_time
+                current_time += new_time
+
+        return eventtime + self.cycle_time
 
 
 def load_config_prefix(config):
