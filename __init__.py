@@ -22,7 +22,7 @@ def set_pwm(self, read_time, value):
                     if heater != self:
                         heater.apply_pwm(read_time, 0)
                         
-                    read_time += self.switching_delay # Ensures that the relay or ssr turns fully off before starting the next heater
+                read_time += self.switching_delay # Ensures that the relay or ssr turns fully off before starting the next heater
     
     logging.debug(f"Read Time: {read_time}, Target Heater PWM Value: {value} Heater Request: {sched}")
     
