@@ -24,12 +24,12 @@ def set_pwm(self, read_time, value):
                         
                 read_time += self.switching_delay # Ensures that the relay or ssr turns fully off before starting the next heater
     
-    logging.debug(f"Read Time: {read_time}, Target Heater PWM Value: {value} Heater Request: {sched}")
+    #logging.debug(f"Read Time: {read_time}, Target Heater PWM Value: {value} Heater Request: {sched}")
     
     self.apply_pwm(read_time, value)
 
 def schedule_pwm(self, time, start_time, value, end_time):    
-    logging.debug(f"Time: {time} Heater {self.name} scheduling {start_time} to {end_time} with a pwm of: {value}")
+    #logging.debug(f"Time: {time} Heater {self.name} scheduling {start_time} to {end_time} with a pwm of: {value}")
     self.schedule = {"start_time": start_time, "end_time": end_time, "value": value}
 
 ######################################################################
@@ -98,7 +98,7 @@ class SharedHeaterGroup:
 
     def _schedule_heaters(self, eventtime):
         time = self.reactor.monotonic()   
-        logging.debug("Scheduling Heaters")
+        #logging.debug("Scheduling Heaters")
         boxes = []
         for i in range(self.max_active):
             boxes.append({
